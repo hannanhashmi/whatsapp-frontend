@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Business Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/124/124034.png">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar - Chat List -->
+        <div class="sidebar active" id="sidebar">
+            <div class="header">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fab fa-whatsapp"></i>
+                    </div>
+                    <div>
+                        <h1>WhatsApp Business</h1>
+                        <div class="status" id="connectionStatus">Connecting...</div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-button" id="newChatBtn" title="New Chat">
+                        <i class="fas fa-comment-medical"></i>
+                    </button>
+                    <button class="icon-button" id="refreshBtn" title="Refresh">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="search-box">
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search or start new chat">
+                </div>
+            </div>
+
+            <div class="chat-list" id="chatList">
+                <div class="loading-chats">
+                    <div class="loading-spinner"></div>
+                    <p>Loading conversations...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="main-chat" id="mainChat">
+            <div class="chat-header">
+                <button class="back-button" id="backButton">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="chat-avatar" id="currentChatAvatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="chat-details">
+                    <h2 id="currentChatName">WhatsApp Dashboard</h2>
+                    <div class="chat-status" id="currentChatStatus">Select a chat to start messaging</div>
+                </div>
+                <div class="chat-actions">
+                    <button class="icon-button" title="Contact Info">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="empty-state" id="emptyState">
+                    <div class="welcome-icon">
+                        <i class="fab fa-whatsapp"></i>
+                    </div>
+                    <h2>Welcome to WhatsApp Business</h2>
+                    <p>Select a conversation from the list to start messaging</p>
+                    <div class="instructions">
+                        <p><i class="fas fa-check-circle"></i> Real-time messaging</p>
+                        <p><i class="fas fa-check-circle"></i> Send & receive messages</p>
+                        <p><i class="fas fa-check-circle"></i> WhatsApp-like interface</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="message-input">
+                <button class="icon-button" title="Emoji">
+                    <i class="far fa-smile"></i>
+                </button>
+                <button class="icon-button" title="Attach file">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                
+                <div class="input-container">
+                    <input type="text" id="messageInput" placeholder="Type a message" disabled>
+                </div>
+                
+                <button class="send-button" id="sendButton" disabled>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Chat Modal -->
+    <div class="modal" id="newChatModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-comment-medical"></i> New Chat</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="newChatNumber"><i class="fas fa-phone"></i> WhatsApp Number</label>
+                    <input type="text" id="newChatNumber" placeholder="919876543210 (with country code)">
+                    <small>Enter number with country code but without + sign</small>
+                </div>
+                <div class="form-group">
+                    <label for="initialMessage"><i class="fas fa-comment"></i> Initial Message (Optional)</label>
+                    <textarea id="initialMessage" placeholder="Hello! This is a test message from WhatsApp Business Dashboard" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary close-modal">Cancel</button>
+                <button class="btn-primary" id="startChatBtn">
+                    <i class="fas fa-paper-plane"></i> Start Chat
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

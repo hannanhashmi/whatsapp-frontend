@@ -1,0 +1,112 @@
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+body {
+    background: #0d1418;
+    color: #e9edef;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* App Container */
+.app-container {
+    display: flex;
+    height: 100vh;
+    max-width: 1600px;
+    margin: 0 auto;
+    background: #111b21;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 30%;
+    min-width: 350px;
+    border-right: 1px solid #2a3942;
+    display: flex;
+    flex-direction: column;
+    background: #111b21;
+}
+
+.header {
+    background: #202c33;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #2a3942;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo-icon {
+    color: #00a884;
+    font-size: 28px;
+}
+
+.logo h1 {
+    font-size: 18px;
+    font-weight: 500;
+    color: #e9edef;
+}
+
+.status {
+    color: #8696a0;
+    font-size: 13px;
+    margin-top: 3px;
+}
+
+.status.connected {
+    color: #00a884;
+}
+
+.status.disconnected {
+    color: #ff6b6b;
+}
+
+.header-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.icon-button {
+    background: transparent;
+    border: none;
+    color: #aebac1;
+    font-size: 20px;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.icon-button:hover {
+    background: #2a3942;
+    color: #e9edef;
+}
+
+/* Search */
+.search-box {
+    padding: 15px 20px;
+    background: #111b21;
+}
+
+.search-container {
+    background: #202c33;
+    border-radius: 8px;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+   

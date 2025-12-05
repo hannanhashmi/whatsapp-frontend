@@ -44,6 +44,105 @@ document.addEventListener('DOMContentLoaded', function() {
             connectionStatus.classList.add('disconnected');
         }
     }
+
+
+// ================= LOCAL STORAGE FUNCTIONS =================
+// Add these functions to your existing script.js
+
+// Save chats to localStorage
+function saveChatsToLocalStorage() {
+    try {
+        const data = {
+            chats: allChats,
+            timestamp: new Date().toISOString(),
+            version: '1.0'
+        };
+        localStorage.setItem('whatsapp_chats_backup', JSON.stringify(data));
+        console.log('💾 Chats saved to local storage');
+        return true;
+    } catch (error) {
+        console.error('Error saving chats to storage:', error);
+        return false;
+    }
+}
+
+// Load chats from localStorage
+function loadChatsFromLocalStorage() {
+    try {
+        const saved = localStorage.getItem('whatsapp_chats_backup');
+        if (saved) {
+            const data = JSON.parse(saved);
+            
+            // Check if data is recent (less than 24 hours old)
+            const savedDate = new Date(data.timestamp);
+            const now = new Date();
+            const hoursDiff = (now - savedDate) / (1000 * 60 * 60);
+            
+            if (hoursDiff < 24 && data.chats && data.chats.length > 0) {
+                console.log('💾 Loaded chats from local storage:', data.chats.length);
+                return data.chats;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading chats from storage:', error);
+    }
+    return null;
+}
+
+// Update your existing loadChats function to include storage
+async function loadChats() {
+    // First try to load from local storage
+    const storedChats = loadChatsFromLocalStorage();
+    if (storedChats) {
+        allChats = storedChats;
+        renderChatList(allChats);
+    }
+    
+    // Then load from backend
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/chats`);
+        if (response.ok) {
+            const backendChats = await response.json();
+            
+            // Merge with existing chats
+            backendChats.forEach(backendChat => {
+                const existingIndex = allChats.findIndex(c => c.number === backendChat.number);
+                
+                if (existingIndex >= 0) {
+                    // Merge messages
+                    const existingChat = allChats[existingIndex];
+                    backendChat.messages.forEach(msg => {
+                        if (!existingChat.messages.some(m => m.id === msg.id)) {
+                            existingChat.messages.push(msg);
+                        }
+                    });
+                    existingChat.lastMessage = backendChat.lastMessage;
+                    existingChat.unread = backendChat.unread;
+                } else {
+                    allChats.push(backendChat);
+                }
+            });
+            
+            // Sort by last message
+            allChats.sort((a, b) => new Date(b.lastMessage) - new Date(a.lastMessage));
+            
+            renderChatList(allChats);
+            saveChatsToLocalStorage();
+        }
+    } catch (error) {
+        console.error('Error loading chats from backend:', error);
+    }
+}
+
+// Auto-save every 30 seconds
+setInterval(saveChatsToLocalStorage, 30000);
+
+// Save before page unload
+window.addEventListener('beforeunload', saveChatsToLocalStorage);
+
+
+
+
     
     // Test backend connection
     async function testBackendConnection() {

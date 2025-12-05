@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - WhatsApp CRM</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Login specific styles */
+        .auth-page {
+            background: #0d1418;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .auth-card {
+            background: #202c33;
+            padding: 40px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid #2a3942;
+        }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .auth-header i {
+            font-size: 50px;
+            color: #00a884;
+            margin-bottom: 15px;
+        }
+        .auth-header h1 {
+            font-size: 24px;
+            color: #e9edef;
+            margin-bottom: 5px;
+        }
+        .auth-header p {
+            color: #8696a0;
+            font-size: 14px;
+        }
+        .auth-form {
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            color: #e9edef;
+            margin-bottom: 8px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .auth-input {
+            width: 100%;
+            padding: 12px 15px;
+            background: #2a3942;
+            border: 1px solid #3d4b52;
+            border-radius: 8px;
+            color: #e9edef;
+            font-size: 15px;
+        }
+        .auth-input:focus {
+            outline: none;
+            border-color: #00a884;
+        }
+        .auth-btn {
+            width: 100%;
+            padding: 14px;
+            background: #00a884;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .auth-btn:hover {
+            background: #06cf9c;
+        }
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #8696a0;
+            font-size: 14px;
+        }
+        .auth-footer a {
+            color: #00a884;
+            text-decoration: none;
+        }
+        .role-info {
+            margin-top: 25px;
+            padding: 15px;
+            background: #111b21;
+            border-radius: 8px;
+            border-left: 4px solid #00a884;
+        }
+        .role-info h4 {
+            color: #e9edef;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .demo-credentials {
+            background: rgba(0, 168, 132, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #8696a0;
+        }
+    </style>
+</head>
+<body class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fab fa-whatsapp"></i>
+            <h1>WhatsApp Business CRM</h1>
+            <p>Secure Role-Based Access</p>
+        </div>
+        
+        <form id="loginForm" class="auth-form">
+            <div class="form-group">
+                <label for="username">
+                    <i class="fas fa-user"></i> Username
+                </label>
+                <input type="text" id="username" class="auth-input" required 
+                       placeholder="Enter admin, manager or executive">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">
+                    <i class="fas fa-lock"></i> Password
+                </label>
+                <input type="password" id="password" class="auth-input" required 
+                       placeholder="Enter password">
+            </div>
+            
+            <button type="submit" class="auth-btn">
+                <i class="fas fa-sign-in-alt"></i> Login to Dashboard
+            </button>
+            
+            <div id="errorMessage" style="color: #ff6b6b; text-align: center; margin-top: 15px; font-size: 14px;"></div>
+        </form>
+        
+        <div class="role-info">
+            <h4><i class="fas fa-users"></i> Available Roles</h4>
+            <p style="color: #8696a0; font-size: 13px; line-height: 1.5;">
+                <strong>Admin:</strong> Full system access<br>
+                <strong>Manager:</strong> Team management<br>
+                <strong>Executive:</strong> Customer messaging
+            </p>
+        </div>
+        
+        <div class="demo-credentials">
+            <p><i class="fas fa-key"></i> <strong>Demo Credentials:</strong></p>
+            <p>Username: admin, manager, executive</p>
+            <p>Password: password123</p>
+        </div>
+    </div>
+    
+    <script>
+        // Simple authentication
+        const USERS = {
+            'admin': { 
+                password: 'password123', 
+                name: 'Administrator',
+                role: 'admin',
+                permissions: ['all']
+            },
+            'manager': { 
+                password: 'password123', 
+                name: 'Operations Manager',
+                role: 'manager',
+                permissions: ['view', 'reply', 'analytics']
+            },
+            'executive': { 
+                password: 'password123', 
+                name: 'Customer Executive',
+                role: 'executive',
+                permissions: ['view', 'reply']
+            }
+        };
+        
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.toLowerCase().trim();
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('errorMessage');
+            
+            errorEl.textContent = '';
+            
+            const user = USERS[username];
+            
+            if (user && user.password === password) {
+                // Save user to localStorage
+                const userData = {
+                    username: username,
+                    name: user.name,
+                    role: user.role,
+                    permissions: user.permissions,
+                    loginTime: new Date().toISOString()
+                };
+                
+                localStorage.setItem('whatsapp_user', JSON.stringify(userData));
+                
+                // Show success and redirect
+                errorEl.textContent = 'Login successful! Redirecting...';
+                errorEl.style.color = '#00a884';
+                
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+                
+            } else {
+                errorEl.textContent = 'Invalid username or password';
+            }
+        });
+        
+        // If already logged in, redirect to dashboard
+        const currentUser = localStorage.getItem('whatsapp_user');
+        if (currentUser) {
+            window.location.href = 'index.html';
+        }
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+</body>
+</html>

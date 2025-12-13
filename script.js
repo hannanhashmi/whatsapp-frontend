@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 connectionStatus.classList.add('disconnected');
             });
             
-            // ✅ UPDATED: Listen for new messages with media support
+            // Listen for new messages with media support
             socket.on('new_message', (data) => {
                 console.log('📨 New message via socket:', data);
                 
@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         data.message || data.text, 
                         'received', 
                         new Date(data.timestamp),
-                        data.mediaInfo  // ✅ Pass media info
+                        data.mediaInfo  // Pass media info
                     );
                     scrollToBottom();
                 }
@@ -382,7 +382,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     msg.text || msg.content, 
                     msg.type === 'sent' ? 'sent' : 'received', 
                     msg.timestamp,
-                    mediaInfo  // ✅ Pass media info
+                    mediaInfo
                 );
             });
             
@@ -399,7 +399,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // ✅ UPDATED: Function to add message with media support
+    // Function to add message with media support
     function addMessageToChat(text, type, timestamp, mediaInfo = null) {
         const messageContainer = document.createElement('div');
         messageContainer.className = `message-container ${type}`;
@@ -416,11 +416,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         let messageContent = '';
-        let isMediaMessage = false;
         
-        // ✅ CHECK IF IT'S A MEDIA MESSAGE
+        // CHECK IF IT'S A MEDIA MESSAGE
         if (mediaInfo || (text && (text.includes('🖼️') || text.includes('🎵')))) {
-            isMediaMessage = true;
             const mediaType = mediaInfo?.type || 
                              (text.includes('🖼️') ? 'image' : 
                               text.includes('🎵') ? 'audio' : '');
@@ -432,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return parts[parts.length - 1];
             };
             
-            // ✅ IMAGE MESSAGE
+            // IMAGE MESSAGE
             if (mediaType === 'image') {
                 let imageUrl = '';
                 if (mediaInfo?.url) {
@@ -459,6 +457,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                    </div>`
                             }
                             ${mediaInfo?.caption ? `<div class="media-caption">${escapeHtml(mediaInfo.caption)}</div>` : ''}
+                            ${text ? `<div class="message-text">${escapeHtml(text)}</div>` : ''}
                         </div>
                         <div class="message-meta">
                             <span class="time">${timeString}</span>
@@ -472,7 +471,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }
             
-            // ✅ AUDIO MESSAGE
+            // AUDIO MESSAGE
             else if (mediaType === 'audio') {
                 let audioUrl = '';
                 if (mediaInfo?.url) {
@@ -501,6 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                             </div>
                             ${mediaInfo?.caption ? `<div class="media-caption">${escapeHtml(mediaInfo.caption)}</div>` : ''}
+                            ${text ? `<div class="message-text">${escapeHtml(text)}</div>` : ''}
                         </div>
                         <div class="message-meta">
                             <span class="time">${timeString}</span>
@@ -514,7 +514,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }
             
-            // ✅ OTHER MEDIA TYPES
+            // OTHER MEDIA TYPES
             else {
                 messageContent = `
                     <div class="message-bubble">
@@ -523,6 +523,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="fas fa-file"></i>
                                 <span>Media Message</span>
                             </div>
+                            ${text ? `<div class="message-text">${escapeHtml(text)}</div>` : ''}
                         </div>
                         <div class="message-meta">
                             <span class="time">${timeString}</span>
@@ -537,7 +538,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // ✅ REGULAR TEXT MESSAGE
+        // REGULAR TEXT MESSAGE
         else {
             messageContent = `
                 <div class="message-bubble">

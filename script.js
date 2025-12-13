@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
     // ================= CONFIGURATION =================
-    // ⚠️ IMPORTANT: Replace with your Render backend URL
     const BACKEND_URL = 'https://whatsapp-api-backend-1cgh.onrender.com';
     // ================================================
     
@@ -45,105 +44,44 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-
-// ================= LOCAL STORAGE FUNCTIONS =================
-// Add these functions to your existing script.js
-
-// Save chats to localStorage
-function saveChatsToLocalStorage() {
-    try {
-        const data = {
-            chats: allChats,
-            timestamp: new Date().toISOString(),
-            version: '1.0'
-        };
-        localStorage.setItem('whatsapp_chats_backup', JSON.stringify(data));
-        console.log('💾 Chats saved to local storage');
-        return true;
-    } catch (error) {
-        console.error('Error saving chats to storage:', error);
-        return false;
-    }
-}
-
-// Load chats from localStorage
-function loadChatsFromLocalStorage() {
-    try {
-        const saved = localStorage.getItem('whatsapp_chats_backup');
-        if (saved) {
-            const data = JSON.parse(saved);
-            
-            // Check if data is recent (less than 24 hours old)
-            const savedDate = new Date(data.timestamp);
-            const now = new Date();
-            const hoursDiff = (now - savedDate) / (1000 * 60 * 60);
-            
-            if (hoursDiff < 24 && data.chats && data.chats.length > 0) {
-                console.log('💾 Loaded chats from local storage:', data.chats.length);
-                return data.chats;
-            }
+    // ================= LOCAL STORAGE FUNCTIONS =================
+    function saveChatsToLocalStorage() {
+        try {
+            const data = {
+                chats: allChats,
+                timestamp: new Date().toISOString(),
+                version: '1.0'
+            };
+            localStorage.setItem('whatsapp_chats_backup', JSON.stringify(data));
+            console.log('💾 Chats saved to local storage');
+            return true;
+        } catch (error) {
+            console.error('Error saving chats to storage:', error);
+            return false;
         }
-    } catch (error) {
-        console.error('Error loading chats from storage:', error);
     }
-    return null;
-}
 
-// Update your existing loadChats function to include storage
-async function loadChats() {
-    // First try to load from local storage
-    const storedChats = loadChatsFromLocalStorage();
-    if (storedChats) {
-        allChats = storedChats;
-        renderChatList(allChats);
-    }
-    
-    // Then load from backend
-    try {
-        const response = await fetch(`${BACKEND_URL}/api/chats`);
-        if (response.ok) {
-            const backendChats = await response.json();
-            
-            // Merge with existing chats
-            backendChats.forEach(backendChat => {
-                const existingIndex = allChats.findIndex(c => c.number === backendChat.number);
+    function loadChatsFromLocalStorage() {
+        try {
+            const saved = localStorage.getItem('whatsapp_chats_backup');
+            if (saved) {
+                const data = JSON.parse(saved);
                 
-                if (existingIndex >= 0) {
-                    // Merge messages
-                    const existingChat = allChats[existingIndex];
-                    backendChat.messages.forEach(msg => {
-                        if (!existingChat.messages.some(m => m.id === msg.id)) {
-                            existingChat.messages.push(msg);
-                        }
-                    });
-                    existingChat.lastMessage = backendChat.lastMessage;
-                    existingChat.unread = backendChat.unread;
-                } else {
-                    allChats.push(backendChat);
+                const savedDate = new Date(data.timestamp);
+                const now = new Date();
+                const hoursDiff = (now - savedDate) / (1000 * 60 * 60);
+                
+                if (hoursDiff < 24 && data.chats && data.chats.length > 0) {
+                    console.log('💾 Loaded chats from local storage:', data.chats.length);
+                    return data.chats;
                 }
-            });
-            
-            // Sort by last message
-            allChats.sort((a, b) => new Date(b.lastMessage) - new Date(a.lastMessage));
-            
-            renderChatList(allChats);
-            saveChatsToLocalStorage();
+            }
+        } catch (error) {
+            console.error('Error loading chats from storage:', error);
         }
-    } catch (error) {
-        console.error('Error loading chats from backend:', error);
+        return null;
     }
-}
 
-// Auto-save every 30 seconds
-setInterval(saveChatsToLocalStorage, 30000);
-
-// Save before page unload
-window.addEventListener('beforeunload', saveChatsToLocalStorage);
-
-
-
-
-    
     // Test backend connection
     async function testBackendConnection() {
         try {
@@ -200,12 +138,18 @@ window.addEventListener('beforeunload', saveChatsToLocalStorage);
                 connectionStatus.classList.add('disconnected');
             });
             
-            // Listen for new messages
+            // ✅ UPDATED: Listen for new messages with media support
             socket.on('new_message', (data) => {
                 console.log('📨 New message via socket:', data);
                 
                 if (currentChat && data.from === currentChat.number) {
-                    addMessageToChat(data.message, 'received', new Date(data.timestamp));
+                    // Add message with media info
+                    addMessageToChat(
+                        data.message || data.text, 
+                        'received', 
+                        new Date(data.timestamp),
+                        data.mediaInfo  // ✅ Pass media info
+                    );
                     scrollToBottom();
                 }
                 
@@ -215,7 +159,6 @@ window.addEventListener('beforeunload', saveChatsToLocalStorage);
             
             socket.on('message_sent', (data) => {
                 if (currentChat && data.to === currentChat.number) {
-                    // Update message status if needed
                     console.log('Message sent confirmation:', data);
                 }
             });
@@ -228,6 +171,12 @@ window.addEventListener('beforeunload', saveChatsToLocalStorage);
     
     // ================= CHAT FUNCTIONS =================
     async function loadChats() {
+        const storedChats = loadChatsFromLocalStorage();
+        if (storedChats) {
+            allChats = storedChats;
+            renderChatList(allChats);
+        }
+        
         if (!isConnected) {
             if (!await testBackendConnection()) return;
         }
@@ -246,10 +195,32 @@ window.addEventListener('beforeunload', saveChatsToLocalStorage);
                 throw new Error(`HTTP ${response.status}`);
             }
             
-            allChats = await response.json();
+            const backendChats = await response.json();
+            
+            // Merge with existing chats
+            backendChats.forEach(backendChat => {
+                const existingIndex = allChats.findIndex(c => c.number === backendChat.number);
+                
+                if (existingIndex >= 0) {
+                    const existingChat = allChats[existingIndex];
+                    backendChat.messages.forEach(msg => {
+                        if (!existingChat.messages.some(m => m.id === msg.id)) {
+                            existingChat.messages.push(msg);
+                        }
+                    });
+                    existingChat.lastMessage = backendChat.lastMessage;
+                    existingChat.unread = backendChat.unread;
+                } else {
+                    allChats.push(backendChat);
+                }
+            });
+            
+            // Sort by last message
+            allChats.sort((a, b) => new Date(b.lastMessage) - new Date(a.lastMessage));
             filteredChats = [...allChats];
             
             renderChatList(filteredChats);
+            saveChatsToLocalStorage();
             
         } catch (error) {
             console.error('Error loading chats:', error);
@@ -285,9 +256,26 @@ window.addEventListener('beforeunload', saveChatsToLocalStorage);
         
         chats.forEach(chat => {
             const lastMsg = chat.messages[chat.messages.length - 1];
-            const lastMsgText = lastMsg ? 
-                (lastMsg.text.length > 30 ? lastMsg.text.substring(0, 30) + '...' : lastMsg.text) : 
-                'No messages';
+            let lastMsgText = '';
+            
+            if (lastMsg) {
+                // Check if it's a media message
+                if (lastMsg.mediaInfo || (lastMsg.text && (lastMsg.text.includes('🖼️') || lastMsg.text.includes('🎵')))) {
+                    if (lastMsg.text.includes('🖼️')) {
+                        lastMsgText = '🖼️ Image';
+                    } else if (lastMsg.text.includes('🎵')) {
+                        lastMsgText = '🎵 Audio';
+                    } else {
+                        lastMsgText = '📁 Media';
+                    }
+                } else {
+                    lastMsgText = lastMsg.text.length > 30 ? 
+                        lastMsg.text.substring(0, 30) + '...' : 
+                        lastMsg.text;
+                }
+            } else {
+                lastMsgText = 'No messages';
+            }
             
             const lastMsgTime = chat.lastMessage ? formatTime(chat.lastMessage) : '';
             
@@ -384,7 +372,18 @@ window.addEventListener('beforeunload', saveChatsToLocalStorage);
             }
             
             messages.forEach(msg => {
-                addMessageToChat(msg.text, msg.type === 'sent' ? 'sent' : 'received', msg.timestamp);
+                // Extract media info from message
+                let mediaInfo = null;
+                if (msg.mediaInfo) {
+                    mediaInfo = typeof msg.mediaInfo === 'string' ? JSON.parse(msg.mediaInfo) : msg.mediaInfo;
+                }
+                
+                addMessageToChat(
+                    msg.text || msg.content, 
+                    msg.type === 'sent' ? 'sent' : 'received', 
+                    msg.timestamp,
+                    mediaInfo  // ✅ Pass media info
+                );
             });
             
             scrollToBottom();
@@ -400,7 +399,8 @@ window.addEventListener('beforeunload', saveChatsToLocalStorage);
         }
     }
     
-    function addMessageToChat(text, type, timestamp) {
+    // ✅ UPDATED: Function to add message with media support
+    function addMessageToChat(text, type, timestamp, mediaInfo = null) {
         const messageContainer = document.createElement('div');
         messageContainer.className = `message-container ${type}`;
         
@@ -411,25 +411,150 @@ window.addEventListener('beforeunload', saveChatsToLocalStorage);
         let statusTitle = 'Delivered';
         
         if (type === 'sent') {
-            // For sent messages, show sending animation temporarily
             statusIcon = 'fas fa-check';
             statusTitle = 'Sent';
         }
         
-        messageContainer.innerHTML = `
-            <div class="message-bubble">
-                <div class="message-text">${escapeHtml(text)}</div>
-                <div class="message-time">
-                    ${timeString}
-                    ${type === 'sent' ? 
-                        `<span class="message-status" title="${statusTitle}">
-                            <i class="${statusIcon}"></i>
-                        </span>` : ''
-                    }
-                </div>
-            </div>
-        `;
+        let messageContent = '';
+        let isMediaMessage = false;
         
+        // ✅ CHECK IF IT'S A MEDIA MESSAGE
+        if (mediaInfo || (text && (text.includes('🖼️') || text.includes('🎵')))) {
+            isMediaMessage = true;
+            const mediaType = mediaInfo?.type || 
+                             (text.includes('🖼️') ? 'image' : 
+                              text.includes('🎵') ? 'audio' : '');
+            
+            // Get file name from URL
+            const getFileNameFromUrl = (url) => {
+                if (!url) return '';
+                const parts = url.split('/');
+                return parts[parts.length - 1];
+            };
+            
+            // ✅ IMAGE MESSAGE
+            if (mediaType === 'image') {
+                let imageUrl = '';
+                if (mediaInfo?.url) {
+                    const fileName = getFileNameFromUrl(mediaInfo.url);
+                    imageUrl = `${BACKEND_URL}/api/media/${fileName}`;
+                } else if (mediaInfo?.localUrl) {
+                    const fileName = getFileNameFromUrl(mediaInfo.localUrl);
+                    imageUrl = `${BACKEND_URL}/api/media/${fileName}`;
+                }
+                
+                messageContent = `
+                    <div class="message-bubble">
+                        <div class="media-content">
+                            ${imageUrl ? 
+                                `<div class="image-container">
+                                    <img src="${imageUrl}" 
+                                         alt="${mediaInfo?.caption || 'Image'}" 
+                                         class="media-image"
+                                         onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\\'media-error\\'><i class=\\'fas fa-image\\'></i><span>Image not loaded</span></div>'">
+                                </div>`
+                                : `<div class="media-placeholder">
+                                    <i class="fas fa-image"></i>
+                                    <span>Image</span>
+                                   </div>`
+                            }
+                            ${mediaInfo?.caption ? `<div class="media-caption">${escapeHtml(mediaInfo.caption)}</div>` : ''}
+                        </div>
+                        <div class="message-meta">
+                            <span class="time">${timeString}</span>
+                            ${type === 'sent' ? 
+                                `<span class="message-status" title="${statusTitle}">
+                                    <i class="${statusIcon}"></i>
+                                </span>` : ''
+                            }
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // ✅ AUDIO MESSAGE
+            else if (mediaType === 'audio') {
+                let audioUrl = '';
+                if (mediaInfo?.url) {
+                    const fileName = getFileNameFromUrl(mediaInfo.url);
+                    audioUrl = `${BACKEND_URL}/api/media/${fileName}`;
+                } else if (mediaInfo?.localUrl) {
+                    const fileName = getFileNameFromUrl(mediaInfo.localUrl);
+                    audioUrl = `${BACKEND_URL}/api/media/${fileName}`;
+                }
+                
+                messageContent = `
+                    <div class="message-bubble">
+                        <div class="media-content">
+                            <div class="audio-container">
+                                ${audioUrl ? 
+                                    `<div class="audio-player">
+                                        <audio controls class="audio-controls">
+                                            <source src="${audioUrl}" type="${mediaInfo?.mimeType || 'audio/ogg'}">
+                                            Your browser does not support audio
+                                        </audio>
+                                    </div>`
+                                    : `<div class="media-placeholder">
+                                        <i class="fas fa-file-audio"></i>
+                                        <span>Audio Message</span>
+                                       </div>`
+                                }
+                            </div>
+                            ${mediaInfo?.caption ? `<div class="media-caption">${escapeHtml(mediaInfo.caption)}</div>` : ''}
+                        </div>
+                        <div class="message-meta">
+                            <span class="time">${timeString}</span>
+                            ${type === 'sent' ? 
+                                `<span class="message-status" title="${statusTitle}">
+                                    <i class="${statusIcon}"></i>
+                                </span>` : ''
+                            }
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // ✅ OTHER MEDIA TYPES
+            else {
+                messageContent = `
+                    <div class="message-bubble">
+                        <div class="media-content">
+                            <div class="media-placeholder">
+                                <i class="fas fa-file"></i>
+                                <span>Media Message</span>
+                            </div>
+                        </div>
+                        <div class="message-meta">
+                            <span class="time">${timeString}</span>
+                            ${type === 'sent' ? 
+                                `<span class="message-status" title="${statusTitle}">
+                                    <i class="${statusIcon}"></i>
+                                </span>` : ''
+                            }
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // ✅ REGULAR TEXT MESSAGE
+        else {
+            messageContent = `
+                <div class="message-bubble">
+                    <div class="message-text">${escapeHtml(text)}</div>
+                    <div class="message-meta">
+                        <span class="time">${timeString}</span>
+                        ${type === 'sent' ? 
+                            `<span class="message-status" title="${statusTitle}">
+                                <i class="${statusIcon}"></i>
+                            </span>` : ''
+                        }
+                    </div>
+                </div>
+            `;
+        }
+        
+        messageContainer.innerHTML = messageContent;
         chatMessages.appendChild(messageContainer);
         
         // If it's a received message and user is viewing this chat, scroll
@@ -459,8 +584,8 @@ window.addEventListener('beforeunload', saveChatsToLocalStorage);
         messageContainer.innerHTML = `
             <div class="message-bubble">
                 <div class="message-text">${escapeHtml(originalText)}</div>
-                <div class="message-time">
-                    ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                <div class="message-meta">
+                    <span class="time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                     <span class="message-status" title="Sending...">
                         <i class="fas fa-clock"></i>
                     </span>
@@ -587,6 +712,12 @@ window.addEventListener('beforeunload', saveChatsToLocalStorage);
                 loadChats();
             }
         }, 30000);
+        
+        // Auto-save chats every 30 seconds
+        setInterval(saveChatsToLocalStorage, 30000);
+        
+        // Save before page unload
+        window.addEventListener('beforeunload', saveChatsToLocalStorage);
     }
     
     function openNewChatModal() {
@@ -688,7 +819,7 @@ window.addEventListener('beforeunload', saveChatsToLocalStorage);
                 modal.style.display = 'none';
                 showToast('New chat started', 'info');
             }
-        }, { once: true }); // Add event listener only once
+        }, { once: true });
     }
     
     function handleResponsiveLayout() {
